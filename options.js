@@ -1,7 +1,8 @@
 const STORAGE_KEYS = {
-  GROUPS: "ytChannelGroups",
-  CHANNEL_TAGS: "ytChannelTags",
-  API_KEY: "ytApiKey"
+  GROUPS: "ytChannelGroups",      // sync
+  CHANNEL_TAGS: "ytChannelTags",  // sync
+  CHANNEL_META: "ytChannelMeta",  // sync
+  API_KEY: "ytApiKey"              // local
 };
 
 function getSync(keys) {
