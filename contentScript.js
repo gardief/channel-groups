@@ -225,6 +225,7 @@ async function openChannelGroupOverlay(channelId) {
 
     // Store basic channel metadata to show in group views
     const metaName =
+      document.querySelector("ytd-channel-name .yt-core-attributed-string")?.textContent ||
       document.querySelector("#text-container yt-formatted-string")?.textContent ||
       document.querySelector("#channel-name #text")?.textContent ||
       document.title.replace("- YouTube", "").trim();
