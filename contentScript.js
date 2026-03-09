@@ -127,18 +127,26 @@ async function openChannelGroupOverlay(channelId) {
   
   // Data migration/consolidation: find if this channel was tagged under a different ID variant
   let storageChanged = false;
+  const currentPath = window.location.pathname;
+
   for (const [oldId, tags] of Object.entries(channelTags)) {
     if (oldId === channelId) continue;
     
     let isMatch = false;
-    // Match handle root (/@name vs /@name/videos)
-    if (oldId.startsWith("/@") && channelId.startsWith("/@")) {
+    
+    // 1. Match current URL path exactly (Legacy upgrade)
+    if (oldId === currentPath || currentPath.startsWith(oldId + "/")) isMatch = true;
+
+    // 2. Match handle root (/@name vs /@name/videos)
+    if (!isMatch && oldId.startsWith("/@") && channelId.startsWith("/@")) {
       if (oldId.split("/")[1] === channelId.split("/")[1]) isMatch = true;
     }
-    // Match if one is a subpath of the other
-    if (oldId.startsWith(channelId + "/") || channelId.startsWith(oldId + "/")) isMatch = true;
+
+    // 3. Match if one is a subpath of the other
+    if (!isMatch && (oldId.startsWith(channelId + "/") || channelId.startsWith(oldId + "/"))) isMatch = true;
 
     if (isMatch) {
+      console.log(`[YTCG] Migrating data from ${oldId} to ${channelId}`);
       channelTags[channelId] = [...new Set([...(channelTags[channelId] || []), ...tags])];
       delete channelTags[oldId];
       if (channelMeta[oldId]) {
