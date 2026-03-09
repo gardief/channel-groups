@@ -101,7 +101,7 @@
 .ytcg-new-group {
   display: flex;
   gap: 6px;
-  margin-top: 8px;
+  margin-bottom: 12px;
 }
 
 #ytcg-new-group-name {
@@ -331,7 +331,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 6px 16px 0 16px;
+  padding: 6px 16px 8px 16px;
 }
 
 #ytcg-groups-guide-new-input {
@@ -379,4 +379,3 @@
 .ytcg-groups-guide-channel:hover {
   text-decoration: underline;
 }
-

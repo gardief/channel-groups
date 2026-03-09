@@ -106,6 +106,10 @@ async function openChannelGroupOverlay(channelId) {
         <h2>Groups for this channel</h2>
       </div>
       <div class="ytcg-overlay-body">
+        <div class="ytcg-new-group">
+          <input id="ytcg-new-group-name" type="text" placeholder="New group name (e.g. Music)" />
+          <button id="ytcg-add-group-btn">Add group</button>
+        </div>
         <div class="ytcg-groups-list">
           ${Object.values(groups).length === 0
             ? '<div class="ytcg-empty">No groups yet. Create one below.</div>'
@@ -122,10 +126,6 @@ async function openChannelGroupOverlay(channelId) {
           `
                 )
                 .join("")}
-        </div>
-        <div class="ytcg-new-group">
-          <input id="ytcg-new-group-name" type="text" placeholder="New group name (e.g. Music)" />
-          <button id="ytcg-add-group-btn">Add group</button>
         </div>
       </div>
       <div class="ytcg-overlay-footer">
@@ -232,7 +232,6 @@ async function injectLeftMenuGroups() {
     section.className = "ytcg-groups-guide-section";
     section.innerHTML = `
       <div class="ytcg-groups-guide-header">Groups</div>
-      <div id="ytcg-groups-guide-list" class="ytcg-groups-guide-list"></div>
       <div class="ytcg-groups-guide-new">
         <input
           id="ytcg-groups-guide-new-input"
@@ -241,6 +240,7 @@ async function injectLeftMenuGroups() {
         />
         <button id="ytcg-groups-guide-add-btn">+</button>
       </div>
+      <div id="ytcg-groups-guide-list" class="ytcg-groups-guide-list"></div>
       <div id="ytcg-groups-guide-channels" class="ytcg-groups-guide-channels"></div>
     `;
     guide.appendChild(section);
