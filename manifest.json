@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "YouTube Channel Grouper",
+  "description": "Tag YouTube channels (music, sports, news, etc.) and view the latest video from each tagged channel grouped on your YouTube homepage.",
+  "version": "0.1.0",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.youtube.com/*",
+    "https://www.googleapis.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.youtube.com/*"
+      ],
+      "js": [
+        "contentScript.js"
+      ],
+      "css": [
+        "styles.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "options_page": "options.html"
+}
+
