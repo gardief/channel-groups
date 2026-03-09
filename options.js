@@ -141,6 +141,20 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   });
 
+  const clearAllDataBtn = document.getElementById("clearAllDataBtn");
+
+  clearAllDataBtn.addEventListener("click", async () => {
+    if (!confirm("Are you sure you want to erase ALL data? This includes your groups, assignments, and API key.")) {
+      return;
+    }
+    await Promise.all([
+      chrome.storage.sync.clear(),
+      chrome.storage.local.clear()
+    ]);
+    alert("All data has been cleared.");
+    render();
+  });
+
   render();
 });
 
