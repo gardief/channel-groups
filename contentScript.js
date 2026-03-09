@@ -430,8 +430,7 @@ async function renderLeftMenuChannelsForSelectedGroup() {
     .map(([cid]) => cid);
 
   if (channelIds.length === 0) {
-    container.innerHTML =
-      '<div class="ytcg-groups-guide-empty">No channels in this group yet.</div>';
+    container.innerHTML = "";
     return;
   }
 
