@@ -311,7 +311,6 @@ async function injectLeftMenuGroups() {
         <button id="ytcg-groups-guide-add-btn">+</button>
       </div>
       <div id="ytcg-groups-guide-list" class="ytcg-groups-guide-list"></div>
-      <div id="ytcg-groups-guide-channels" class="ytcg-groups-guide-channels"></div>
     `;
     guide.appendChild(section);
     leftMenuGroupsInjected = true;
@@ -337,13 +336,16 @@ async function renderLeftMenuGroups() {
       .map(
         (g) => `
         <div class="ytcg-groups-guide-item" data-id="${g.id}">
-          <button class="ytcg-groups-guide-name ${
-            g.id === currentSelectedGroupId ? "ytcg-groups-guide-name-active" : ""
-          }">
-            <span class="ytcg-group-color" style="background:${g.color}"></span>
-            <span class="ytcg-groups-guide-label">${g.name}</span>
-          </button>
-          <button class="ytcg-groups-guide-delete" title="Delete group">×</button>
+          <div class="ytcg-groups-guide-row">
+            <button class="ytcg-groups-guide-name ${
+              g.id === currentSelectedGroupId ? "ytcg-groups-guide-name-active" : ""
+            }">
+              <span class="ytcg-group-color" style="background:${g.color}"></span>
+              <span class="ytcg-groups-guide-label">${escapeHtml(g.name)}</span>
+            </button>
+            <button class="ytcg-groups-guide-delete" title="Delete group">×</button>
+          </div>
+          <div class="ytcg-groups-guide-channels" id="ytcg-channels-${g.id}"></div>
         </div>
       `
       )
@@ -406,15 +408,10 @@ async function renderLeftMenuGroups() {
 }
 
 async function renderLeftMenuChannelsForSelectedGroup() {
-  const container = document.getElementById("ytcg-groups-guide-channels");
+  if (!currentSelectedGroupId) return;
+
+  const container = document.getElementById(`ytcg-channels-${currentSelectedGroupId}`);
   if (!container) return;
-
-  container.innerHTML = "";
-
-  if (!currentSelectedGroupId) {
-    container.innerHTML = "";
-    return;
-  }
 
   const { groups, channelTags, channelMeta } = await ensureDataStructures();
 
