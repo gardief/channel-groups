@@ -42,43 +42,40 @@ function isHomePage() {
   return path === "/" || path === "/feed/subscriptions";
 }
 
-// Try to get a stable channelId from the DOM
-// Try to get a stable channelId from the DOM
+// Try to get a stable channelId from the URL (more reliable in SPA) or DOM
 function getChannelIdFromDom() {
-  // 1. Try metadata with internal ID (most stable)
+  const path = window.location.pathname;
+  if (!path || path === "/") return null; // Not a channel page
+
+  // 1. URL Path check (Handle /@username...)
+  if (path.startsWith("/@")) {
+    const parts = path.split("/");
+    return parts[0] + "/" + parts[1]; // returns "/@username"
+  }
+  
+  // 2. URL Path check (Direct /channel/ID...)
+  if (path.startsWith("/channel/")) {
+    const parts = path.split("/");
+    if (parts[2]) return parts[2];
+  }
+
+  // 3. Fallback: Try metadata for internal ID (most stable)
   const metaId = document.querySelector('meta[itemprop="identifier"]') || 
                  document.querySelector('meta[itemprop="channelId"]');
   if (metaId && metaId.content) return metaId.content;
 
-  // 2. Check canonical link which often contains /channel/UC...
+  // 4. Fallback: Check canonical link for /channel/UC...
   const canonical = document.querySelector('link[rel="canonical"]');
   if (canonical && canonical.href) {
     const m = canonical.href.match(/\/channel\/(UC[^/?#]+)/);
     if (m) return m[1];
   }
 
-  // 3. Check itemprop URL
+  // 5. Fallback: Check itemprop URL
   const link = document.querySelector('link[itemprop="url"]');
   if (link && link.href) {
     const m = link.href.match(/\/channel\/(UC[^/?#]+)/);
     if (m) return m[1];
-  }
-
-  // 4. Fallback: normalize handle or path
-  let path = window.location.pathname;
-  if (!path || path === "/") return null; // Not a channel page ID
-  
-  // Strip trailing sub-pages like /videos, /shorts, /streams, /community
-  // Handle /@username/anything -> /@username
-  if (path.startsWith("/@")) {
-    const parts = path.split("/");
-    return parts[0] + "/" + parts[1]; // returns "/@username"
-  }
-  
-  // Handle /channel/ID/anything -> ID
-  if (path.startsWith("/channel/")) {
-    const parts = path.split("/");
-    return parts[2];
   }
 
   return path;
@@ -105,14 +102,18 @@ let channelGroupButtonInjected = false;
 async function injectChannelGroupButton() {
   if (!isChannelPage() || channelGroupButtonInjected) return;
 
-  const channelId = getChannelIdFromDom();
-  if (!channelId) return;
-
   // Simple fixed-position button to avoid brittle YouTube DOM hooks
   const btn = document.createElement("button");
   btn.id = "ytcg-channel-group-button";
   btn.textContent = "Assign to groups";
-  btn.addEventListener("click", () => openChannelGroupOverlay(channelId));
+  btn.addEventListener("click", () => {
+    const channelId = getChannelIdFromDom();
+    if (channelId) {
+      openChannelGroupOverlay(channelId);
+    } else {
+      console.warn("[YT Channel Grouper] Could not find channel ID at click time.");
+    }
+  });
   document.body.appendChild(btn);
 
   channelGroupButtonInjected = true;
@@ -223,10 +224,13 @@ async function openChannelGroupOverlay(channelId) {
     data.channelTags[channelId] = checked;
 
     // Store basic channel metadata to show in group views
-    const metaName =
-      document.querySelector("#text-container yt-formatted-string")?.textContent ||
-      document.querySelector("#channel-name #text")?.textContent ||
-      document.title.replace("- YouTube", "").trim();
+    const metaName = (
+      document.querySelector("ytd-channel-name #text")?.textContent ||
+      document.querySelector("ytd-channel-name .yt-core-attributed-string")?.textContent ||
+      document.querySelector("#channel-header #channel-name")?.textContent ||
+      document.querySelector("#inner-header-container #channel-name")?.textContent ||
+      document.title.replace("- YouTube", "")
+    ).trim();
     const metaUrl = window.location.href;
     data.channelMeta[channelId] = {
       id: channelId,
@@ -238,6 +242,10 @@ async function openChannelGroupOverlay(channelId) {
       [STORAGE_KEYS.CHANNEL_TAGS]: data.channelTags,
       [STORAGE_KEYS.CHANNEL_META]: data.channelMeta
     });
+    
+    // Refresh sidebar immediately
+    injectLeftMenuGroups();
+    
     overlay.remove();
   });
 
@@ -250,12 +258,26 @@ async function openChannelGroupOverlay(channelId) {
     const color = randomColor();
 
     const data = await ensureDataStructures();
+    
+    // PERSIST current checkbox state before re-opening, so selections aren't lost 
+    const currentSelections = Array.from(
+      overlay.querySelectorAll('.ytcg-group-item input[type="checkbox"]:checked')
+    ).map((el) => el.value);
+    
     data.groups[id] = { id, name, color };
-    await setSync({ [STORAGE_KEYS.GROUPS]: data.groups });
+    data.channelTags[channelId] = currentSelections;
+    
+    await setSync({ 
+      [STORAGE_KEYS.GROUPS]: data.groups,
+      [STORAGE_KEYS.CHANNEL_TAGS]: data.channelTags 
+    });
 
     input.value = "";
     overlay.remove();
     openChannelGroupOverlay(channelId); // re-open to refresh list
+    
+    // Refresh sidebar immediately
+    injectLeftMenuGroups();
   });
 }
 

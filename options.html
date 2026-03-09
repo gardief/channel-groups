@@ -140,8 +140,17 @@
 
     <div class="section" style="border: 1px solid #ff5252; margin-top: 24px;">
       <h2 class="danger">Danger Zone</h2>
-      <p>This will erase all groups, channel assignments, and your API key. This action cannot be undone.</p>
-      <button id="clearAllDataBtn" class="btn-muted danger" style="margin-top: 8px;">Clear all data</button>
+      <p>Manage bulk clear operations for your extension data.</p>
+      
+      <div style="margin-top: 12px;">
+        <p style="margin-bottom: 4px;"><strong>Clear all channel assignments</strong>: This will remove all channels from their assigned groups, but keep your group definitions (Music, Sports, etc.).</p>
+        <button id="clearAssignmentsBtn" class="btn-muted danger">Clear all channel assignments</button>
+      </div>
+
+      <div style="margin-top: 20px; padding-top: 12px; border-top: 1px solid #333;">
+        <p style="margin-bottom: 4px;"><strong>Clear all data</strong>: This will erase all groups, channel assignments, and your API key. This action cannot be undone.</p>
+        <button id="clearAllDataBtn" class="btn-muted danger">Clear all data</button>
+      </div>
     </div>
 
     <script src="options.js"></script>

@@ -1,7 +1,8 @@
 const STORAGE_KEYS = {
-  GROUPS: "ytChannelGroups",
-  CHANNEL_TAGS: "ytChannelTags",
-  API_KEY: "ytApiKey"
+  GROUPS: "ytChannelGroups",      // sync
+  CHANNEL_TAGS: "ytChannelTags",  // sync
+  CHANNEL_META: "ytChannelMeta",  // sync
+  API_KEY: "ytApiKey"              // local
 };
 
 function getSync(keys) {
@@ -141,7 +142,17 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   });
 
+  const clearAssignmentsBtn = document.getElementById("clearAssignmentsBtn");
   const clearAllDataBtn = document.getElementById("clearAllDataBtn");
+
+  clearAssignmentsBtn.addEventListener("click", async () => {
+    if (!confirm("Are you sure you want to remove all channels from their groups? Your group categories (Music, Sports, etc.) will stay.")) {
+      return;
+    }
+    await chrome.storage.sync.remove([STORAGE_KEYS.CHANNEL_TAGS, STORAGE_KEYS.CHANNEL_META]);
+    alert("All channel assignments have been cleared.");
+    render();
+  });
 
   clearAllDataBtn.addEventListener("click", async () => {
     if (!confirm("Are you sure you want to erase ALL data? This includes your groups, assignments, and API key.")) {
