@@ -385,9 +385,6 @@ async function renderLeftMenuChannelsForSelectedGroup() {
     .join("");
 
   container.innerHTML = `
-    <div class="ytcg-groups-guide-channels-title">Channels in "${escapeHtml(
-      group.name
-    )}"</div>
     ${items}
   `;
 }
