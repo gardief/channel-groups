@@ -43,16 +43,45 @@ function isHomePage() {
 }
 
 // Try to get a stable channelId from the DOM
+// Try to get a stable channelId from the DOM
 function getChannelIdFromDom() {
-  // Check link[itemprop="url"] which often contains /channel/<id>
-  const link = document.querySelector('link[itemprop="url"]');
-  if (link && link.href) {
-    const m = link.href.match(/\/channel\/([^/]+)/);
+  // 1. Try metadata with internal ID (most stable)
+  const metaId = document.querySelector('meta[itemprop="identifier"]') || 
+                 document.querySelector('meta[itemprop="channelId"]');
+  if (metaId && metaId.content) return metaId.content;
+
+  // 2. Check canonical link which often contains /channel/UC...
+  const canonical = document.querySelector('link[rel="canonical"]');
+  if (canonical && canonical.href) {
+    const m = canonical.href.match(/\/channel\/(UC[^/?#]+)/);
     if (m) return m[1];
   }
 
-  // Fallback: use path as pseudo-id (less stable, but works)
-  return window.location.pathname;
+  // 3. Check itemprop URL
+  const link = document.querySelector('link[itemprop="url"]');
+  if (link && link.href) {
+    const m = link.href.match(/\/channel\/(UC[^/?#]+)/);
+    if (m) return m[1];
+  }
+
+  // 4. Fallback: normalize handle or path
+  let path = window.location.pathname;
+  if (!path || path === "/") return null; // Not a channel page ID
+  
+  // Strip trailing sub-pages like /videos, /shorts, /streams, /community
+  // Handle /@username/anything -> /@username
+  if (path.startsWith("/@")) {
+    const parts = path.split("/");
+    return parts[0] + "/" + parts[1]; // returns "/@username"
+  }
+  
+  // Handle /channel/ID/anything -> ID
+  if (path.startsWith("/channel/")) {
+    const parts = path.split("/");
+    return parts[2];
+  }
+
+  return path;
 }
 
 async function ensureDataStructures() {
@@ -93,7 +122,40 @@ async function openChannelGroupOverlay(channelId) {
   const existing = document.getElementById("ytcg-overlay");
   if (existing) existing.remove();
 
-  const { groups, channelTags, channelMeta } = await ensureDataStructures();
+  const data = await ensureDataStructures();
+  const { groups, channelTags, channelMeta } = data;
+  
+  // Data migration/consolidation: find if this channel was tagged under a different ID variant
+  let storageChanged = false;
+  for (const [oldId, tags] of Object.entries(channelTags)) {
+    if (oldId === channelId) continue;
+    
+    let isMatch = false;
+    // Match handle root (/@name vs /@name/videos)
+    if (oldId.startsWith("/@") && channelId.startsWith("/@")) {
+      if (oldId.split("/")[1] === channelId.split("/")[1]) isMatch = true;
+    }
+    // Match if one is a subpath of the other
+    if (oldId.startsWith(channelId + "/") || channelId.startsWith(oldId + "/")) isMatch = true;
+
+    if (isMatch) {
+      channelTags[channelId] = [...new Set([...(channelTags[channelId] || []), ...tags])];
+      delete channelTags[oldId];
+      if (channelMeta[oldId]) {
+        channelMeta[channelId] = { ...channelMeta[oldId], ...(channelMeta[channelId] || {}) };
+        delete channelMeta[oldId];
+      }
+      storageChanged = true;
+    }
+  }
+
+  if (storageChanged) {
+    await setSync({
+      [STORAGE_KEYS.CHANNEL_TAGS]: channelTags,
+      [STORAGE_KEYS.CHANNEL_META]: channelMeta
+    });
+  }
+
   const currentGroups = channelTags[channelId] || [];
   const hasAnyGroup = currentGroups.length > 0;
 
