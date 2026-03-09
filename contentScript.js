@@ -105,14 +105,18 @@ let channelGroupButtonInjected = false;
 async function injectChannelGroupButton() {
   if (!isChannelPage() || channelGroupButtonInjected) return;
 
-  const channelId = getChannelIdFromDom();
-  if (!channelId) return;
-
   // Simple fixed-position button to avoid brittle YouTube DOM hooks
   const btn = document.createElement("button");
   btn.id = "ytcg-channel-group-button";
   btn.textContent = "Assign to groups";
-  btn.addEventListener("click", () => openChannelGroupOverlay(channelId));
+  btn.addEventListener("click", () => {
+    const channelId = getChannelIdFromDom();
+    if (channelId) {
+      openChannelGroupOverlay(channelId);
+    } else {
+      console.warn("[YT Channel Grouper] Could not find channel ID at click time.");
+    }
+  });
   document.body.appendChild(btn);
 
   channelGroupButtonInjected = true;
@@ -238,6 +242,10 @@ async function openChannelGroupOverlay(channelId) {
       [STORAGE_KEYS.CHANNEL_TAGS]: data.channelTags,
       [STORAGE_KEYS.CHANNEL_META]: data.channelMeta
     });
+    
+    // Refresh sidebar immediately
+    injectLeftMenuGroups();
+    
     overlay.remove();
   });
 
@@ -250,12 +258,26 @@ async function openChannelGroupOverlay(channelId) {
     const color = randomColor();
 
     const data = await ensureDataStructures();
+    
+    // PERSIST current checkbox state before re-opening, so selections aren't lost 
+    const currentSelections = Array.from(
+      overlay.querySelectorAll('.ytcg-group-item input[type="checkbox"]:checked')
+    ).map((el) => el.value);
+    
     data.groups[id] = { id, name, color };
-    await setSync({ [STORAGE_KEYS.GROUPS]: data.groups });
+    data.channelTags[channelId] = currentSelections;
+    
+    await setSync({ 
+      [STORAGE_KEYS.GROUPS]: data.groups,
+      [STORAGE_KEYS.CHANNEL_TAGS]: data.channelTags 
+    });
 
     input.value = "";
     overlay.remove();
     openChannelGroupOverlay(channelId); // re-open to refresh list
+    
+    // Refresh sidebar immediately
+    injectLeftMenuGroups();
   });
 }
 
