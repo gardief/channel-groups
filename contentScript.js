@@ -412,8 +412,7 @@ async function renderLeftMenuChannelsForSelectedGroup() {
   container.innerHTML = "";
 
   if (!currentSelectedGroupId) {
-    container.innerHTML =
-      '<div class="ytcg-groups-guide-empty">Select a group to see its channels.</div>';
+    container.innerHTML = "";
     return;
   }
 
