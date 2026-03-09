@@ -224,11 +224,13 @@ async function openChannelGroupOverlay(channelId) {
     data.channelTags[channelId] = checked;
 
     // Store basic channel metadata to show in group views
-    const metaName =
+    const metaName = (
+      document.querySelector("ytd-channel-name #text")?.textContent ||
       document.querySelector("ytd-channel-name .yt-core-attributed-string")?.textContent ||
-      document.querySelector("#text-container yt-formatted-string")?.textContent ||
-      document.querySelector("#channel-name #text")?.textContent ||
-      document.title.replace("- YouTube", "").trim();
+      document.querySelector("#channel-header #channel-name")?.textContent ||
+      document.querySelector("#inner-header-container #channel-name")?.textContent ||
+      document.title.replace("- YouTube", "")
+    ).trim();
     const metaUrl = window.location.href;
     data.channelMeta[channelId] = {
       id: channelId,
